@@ -106,15 +106,14 @@ package kookies.model;
 	        return conn != null;
 	    }
 	    
+	    
+	    // QUERY DB FOR COOKIE LIST
 	    public List<Cookie> getCookieList(){
 	    	ArrayList<Cookie> cookieList = new ArrayList<Cookie>();
 	    	String cookies = "select * from cookies;";
 	    	Statement statement = null;
-	    	
 	    	try{
-
 	    		statement = conn.createStatement();	    		
-	    		//System.out.println(conn.isClosed());
 	    		ResultSet cookieListRS = statement.executeQuery(cookies);
 	    		while(cookieListRS.next()){
 	    			cookieList.add(new Cookie(cookieListRS.getString(1)));
@@ -130,6 +129,7 @@ package kookies.model;
 	    	return cookieList;
 	    }
 	    
+	    // QUERY DB FOR RECIPE LIST FOR SPECIFIC COOKIE
 	    private List<Ingredient> getRecipe(String cookie){
 	    	StringBuilder builder = new StringBuilder();
 	    	builder.append("'");
@@ -154,11 +154,11 @@ package kookies.model;
 	    	return recipe;
 	    }
 	    
+	    // UPDATE DB FOR CURRENT AMMOUNTS OF INGREDIENTS IN STOCK
 	    public List<Ingredient> getIngredientStock(){
 	    	ArrayList<Ingredient> stock = new ArrayList<Ingredient>();
 	    	IngredientFactory factory = new IngredientFactory();
 	    	String query = "select * from ingredients";
-	    	
 	    	try{
 	    		Statement statement = conn.createStatement();
 	    		ResultSet stockRS = statement.executeQuery(query);
@@ -173,8 +173,8 @@ package kookies.model;
 	    	return stock;
 	    }
 	    
+	    // UPDATE DB FOR INGREDIENT DELIVERY
 	    public int ingredientStockDelivery(double amount, String ingredient){
-	    	//String updateStock = "update ingredients set amount = amount + ? where ingredient = ?";
 	    	String updateStock = "call delivery(?,?,?)";
 	    	int changes = 0;
 	    	try{
@@ -190,6 +190,7 @@ package kookies.model;
 	    	
 	    }
 	    
+	    // UPDATE DB FOR PRODUCING A PALLET
 	    public void palletProducetion(Cookie cookie){
 	    	String producePallet = "call producePallet(?,?)";
 	    	try{
@@ -202,6 +203,7 @@ package kookies.model;
     		}
 	    }
 
+	    // UPDATE DB FOR PLACEING AN ORDER
 	    public void placeOrder(Order order){
 	    	String customer = order.getCustomer().getName();
 	    	String expDate = order.getExpectedDeliveryDate();
@@ -212,7 +214,6 @@ package kookies.model;
     			statement.setString(1, customer);
     			statement.setString(2, expDate);
     			for(int i = 0 ; i < totals.length ; i++){
-    				//System.out.println(totals[i]);
     				statement.setInt(i+3, totals[i]);
     			}
     			statement.executeUpdate();
@@ -221,6 +222,7 @@ package kookies.model;
     		}
 	    }
 	    
+	    // QUERY DB FOR CUSTOMER LIST
 	    public List<Customer> getCustomerList(){
 	    	String getCustomers = "select * from customers";
 	    	ArrayList<Customer> customerList = new ArrayList<Customer>();
@@ -236,6 +238,7 @@ package kookies.model;
 	    	return customerList;
 	    }
 
+	    // QUERY DB FOR PALLET LIST
 		public List<Pallet> getPallets() {
 			String getPallets = "select * from pallets";
 			ArrayList<Pallet> palletList = new ArrayList<Pallet>();
@@ -259,6 +262,7 @@ package kookies.model;
 			return palletList;
 		}
 		
+		// QUERY DB FOR LIST OF ACTIVE ORDERS
 		public List<Order> getUndeliveredOrders(){
 			ArrayList<Order> undeliveredList = new ArrayList<Order>();
 			String getUndelivered = "select * from orders natural join customers where orderNbr not in (select orderNbr from loadingbills)";
@@ -283,15 +287,15 @@ package kookies.model;
 			return undeliveredList;
 		}
 		
+		// QUERY DB FOR ALL PALLETS IN A SPECIFIC ORDER
 		public List<Pallet> getPalletsByOrderNbr(int orderNbr){
 			System.out.println("getPalletsByOrderNbr(): " + orderNbr);
 			ArrayList<Pallet> pallets = new ArrayList<Pallet>();
 			String palletsByOrderNbr = "select * from pallets where orderNbr = " + orderNbr;
+			System.out.println(palletsByOrderNbr);
 			try{
-				System.out.println("try");
 	    		Statement statement = conn.createStatement();
 	    		ResultSet palletsRS = statement.executeQuery(palletsByOrderNbr);
-	    		System.out.println("result set");
 	    		int i = 1;
 	    		while(palletsRS.next()){
 	    			System.out.println("while " + i);
@@ -302,7 +306,6 @@ package kookies.model;
     						palletsRS.getInt(4),
     						palletsRS.getBoolean(5),
     						palletsRS.getBoolean(6));
-	    			System.out.println(p.getPalletNbr());
 	    			pallets.add(p);
 	    			i++;
 	    		}
@@ -313,12 +316,40 @@ package kookies.model;
 			return pallets;
 		}
 		
+		// TODO MAY NOT NEED TO ACTUALLY HAVE THIS THIS...
 		public Pallet getPalletsByPalletNbr(int palletNbr){
 			Pallet pallet = null;
 			//TODO
 			return pallet;
 		}
 		
+		// PUT A PALLET INTO AN ORDER
+		public void palletIntoOrder(Pallet pallet, Order order){
+	    	String palletIntoOrder = "call palletIntoAnOrder(?,?)";
+	    	System.out.println(palletIntoOrder);
+	    	try{
+    			PreparedStatement statement = conn.prepareStatement(palletIntoOrder);
+    			statement.setInt(1, pallet.getPalletNbr());
+    			statement.setInt(2, order.getOrderNbr());
+    			statement.executeUpdate();
+    		}catch(Exception e){
+    			e.printStackTrace();
+    		}
+	    }
+		
+		// TAKE PALLET OUT OF ORDER 
+		public void palletOutOfOrder(Pallet pallet){
+			   	String palletOutOfOrder = "call palletOutOfAnOrder(?)";
+			   	try{
+		    		PreparedStatement statement = conn.prepareStatement(palletOutOfOrder);
+		    		statement.setInt(1, pallet.getPalletNbr());
+		    		statement.executeUpdate();
+		    	}catch(Exception e){
+		    		e.printStackTrace();
+		    	}
+			}
+		
+		// QUERY THE DB FOR TODAL NUMBER OF PALLETS IN SPECIFIC ORDER
 		public List<Integer> getNbrPallets(int orderNbr){
 			ArrayList<Integer> nbrPallets = new ArrayList<Integer>();
 			String nbrPalletsQuery = "select * from nbrPallets where orderNbr = " + orderNbr;
@@ -335,6 +366,41 @@ package kookies.model;
 			return nbrPallets;
 		}
 		
+		// MAKE A LOADING BILL
+		
+		// PUT AN ORDER INTO THE LOADING BILL
+		
+		// 
+		
+		// QUERY DB FOR ALL LOADING BILLS
+		public List<Load> getLoadingBills(){
+			ArrayList<Load> loadingBills = new ArrayList<Load>();
+			String loadingBillsQuery = "select * from loadingBills";
+			try{
+	    		Statement statement = conn.createStatement();
+	    		ResultSet loadingBillsRS = statement.executeQuery(loadingBillsQuery);
+	    		int lastLoadNbr = 0;
+	    		while(loadingBillsRS.next()){
+	    			int currentLoadNbr = loadingBillsRS.getInt(1);
+	    			if(currentLoadNbr != lastLoadNbr){
+	    				Load loadingBill = new Load(currentLoadNbr, loadingBillsRS.getString(3));
+	    				List<Order> orders = getOrdersByLoadingBillNbr(loadingBill.getLoadNbr());
+	    				for(Order o : orders){
+	    					loadingBill.addOrder(o);
+	    				}
+	    				loadingBills.add(loadingBill);
+	    				System.out.print("DB Bill#"+loadingBill.getLoadNbr());
+	    			}
+	    			lastLoadNbr = currentLoadNbr;
+	    		}
+	    		statement.close();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
+			return loadingBills;
+		}
+		
+		// QUERY DB FOR ALL LOADING ORDERS
 		public List<Load> getLoadingOrders(){
 			ArrayList<Load> loadingOrders = new ArrayList<Load>();
 			String loadingOrdersQuery = "select * from loadingorders";
@@ -361,17 +427,37 @@ package kookies.model;
 			return loadingOrders;
 		}
 		
-		public void assignOrderToLoad(Order order, int loadNbr){
-			if(loadNbr == 0){
+		// UPDATE DB WHEN ORDER ASSIGNED TO LOAD
+		public void assignOrderToLoad(Order order, Load load){
+			if(load == null){
 				//TODO call orderIntoALoad(null,order.getOrderNbr());
+				String orderIntoLoad = "insert into loadingorders values(null,?)";
+		    	try{
+	    			PreparedStatement statement = conn.prepareStatement(orderIntoLoad);
+	    			statement.setInt(1, order.getOrderNbr());
+	    			statement.executeUpdate();
+	    		}catch(Exception e){
+	    			e.printStackTrace();
+	    		}
 			}else{
 				//TODO call orderIntoALoad(loadNbr,order.getOrderNbr());
+				String orderIntoLoad = "call orderIntoALoad(?,?)";
+		    	try{
+	    			PreparedStatement statement = conn.prepareStatement(orderIntoLoad);
+	    			statement.setInt(1, load.getLoadNbr());
+	    			statement.setInt(2, order.getOrderNbr());
+	    			statement.executeUpdate();
+	    		}catch(Exception e){
+	    			e.printStackTrace();
+	    		}
 			}
 		}
 		
+		// QUERY DB FOR ORDERS ATTACHED TO A LOADING ORDER
 		public List<Order> getOrdersByLoadingNbr(int loadingNbr){
 			ArrayList<Order> ordersList = new ArrayList<Order>();
-			String ordersQuery = "select * from orders natural join customers where orderNbr in (select orderNbr from loadingorders where loadNbr = "+loadingNbr +")";
+			String ordersQuery = "select * from orders natural join customers where orderNbr "
+					+ "in (select orderNbr from loadingorders where loadNbr = "+loadingNbr +")";
 			try{
 	    		Statement statement = conn.createStatement();
 	    		ResultSet ordersRS = statement.executeQuery(ordersQuery);
@@ -395,8 +481,63 @@ package kookies.model;
 			return ordersList;
 		}
 		
+		// QUERY DB FOR ORDERS ATTACHED TO A LOADING BILL
+				public List<Order> getOrdersByLoadingBillNbr(int loadingNbr){
+					ArrayList<Order> ordersList = new ArrayList<Order>();
+					String ordersQuery = "select * from orders natural join customers where orderNbr in (select orderNbr from loadingbills where loadNbr = "+loadingNbr +")";
+					try{
+			    		Statement statement = conn.createStatement();
+			    		ResultSet ordersRS = statement.executeQuery(ordersQuery);
+			    		while(ordersRS.next()){
+			    			Order o = new Order(
+			    					new Customer(ordersRS.getString(1),ordersRS.getString(5)),
+			    					ordersRS.getString(3)
+			    				);
+			    			o.setOrderNbr(ordersRS.getInt(2));
+			    			o.setPalletTotals(getCookieList(), getNbrPallets(o.getOrderNbr()));
+			    			for(Pallet p : getPalletsByOrderNbr(o.getOrderNbr())){
+			    				System.out.println("Pallet by bill from db: " + p.getPalletNbr());
+			    				o.addPalletToOrder(p);
+			    			}
+			    			ordersList.add(o);
+			    		}
+			    		statement.close();
+			    	}catch(Exception e){
+			    		e.printStackTrace();
+			    	}
+					return ordersList;
+				}
+		
+		// UPDATE DB FOR DELIVERY OF ORDER TO CUSTOMER
 		public void orderDelivered(Order order){
 			//TODO orderDelivered(order.getOrderNbr(), timeStamp.makeTimeStamp());
+		}
+		
+		public List<Pallet> getPalletListFromQuery(String query){
+			ArrayList<Pallet> pallets = new ArrayList<Pallet>();
+			String palletQuery = query;
+			System.out.println(palletQuery);
+			try{
+	    		Statement statement = conn.createStatement();
+	    		ResultSet palletsRS = statement.executeQuery(palletQuery);
+	    		int i = 1;
+	    		while(palletsRS.next()){
+	    			System.out.println("while " + i);
+	    			Pallet p = new Pallet(
+    						palletsRS.getInt(1), 
+    						new Cookie(palletsRS.getString(3)), 
+    						palletsRS.getDate(2) + " " + palletsRS.getTime(2),
+    						palletsRS.getInt(4),
+    						palletsRS.getBoolean(5),
+    						palletsRS.getBoolean(6));
+	    			pallets.add(p);
+	    			i++;
+	    		}
+	    		statement.close();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
+			return pallets;
 		}
 
 }

@@ -55,12 +55,12 @@ create TABLE Customers(
 	PRIMARY KEY(customerName)
 	);
 
+-- We should delete the deliveryTimeStamp because we really don't need it in two places...
 create TABLE Orders(
 	orderNbr int auto_increment, 
 	expectedDate DATE, 
 	nbrPalletsTotal int, 
 	customerName varchar(20), 
-	deliveryTimeStamp varchar(20),
 	PRIMARY KEY(orderNbr),
 	FOREIGN KEY(customerName) REFERENCES Customers(customerName)
 	);
@@ -86,7 +86,7 @@ create TABLE NbrPallets(
 	);
 
 create TABLE LoadingOrders(
-	loadNbr int, 
+	loadNbr int auto_increment, 
 	orderNbr int,
 	PRIMARY KEY(loadNbr, orderNbr),
 	FOREIGN KEY(orderNbr) REFERENCES Orders(orderNbr)
@@ -95,28 +95,13 @@ create TABLE LoadingOrders(
 create TABLE LoadingBills(
 	loadNbr int, 
 	orderNbr int, 
-	deliveryTimeStamp varchar(20) NOT NULL,
+	deliveryTimeStamp datetime,
 	PRIMARY KEY(loadNbr, orderNbr),
-	FOREIGN KEY(loadNbr) REFERENCES LoadingOrders(loadNbr),
 	FOREIGN KEY(orderNbr) REFERENCES Orders(orderNbr)
 	);
-
-create TABLE Tests(
-	testName varchar(10),
-	startQuarantineTime TIME NOT NULL,
-	endQuarantineTime TIME NOT NULL,
-	PRIMARY KEY(testName)
-	);
-
-create TABLE LabQueue(
-	testName varchar(10), 
-	palletNbr int, 
-	testResult boolean,
-	PRIMARY KEY(testName, palletNbr),
-	FOREIGN KEY(testName) REFERENCES Tests(testName),
-	FOREIGN KEY(palletNbr) REFERENCES Pallets(palletNbr)
-	);
 	
+	
+-- Initial Data
 
 INSERT into Cookies values('Nut cookie');	
 INSERT into Cookies values('Amneris');	
@@ -191,4 +176,130 @@ INSERT into Customers values('Gastkakor AB', 'Hassleholm');
 INSERT into Customers values('Skanekakor AB', 'Perstorp');
 INSERT into Customers values('Finkakor AB', 'Helsingborg');
 INSERT into Customers values('Smabrod AB', 'Malmo');
+
+-- PROCEDURES
+
+DROP PROCEDURE IF EXISTS delivery;
+DROP PROCEDURE IF EXISTS producePallet;
+DROP PROCEDURE IF EXISTS placeOrder;
+DROP PROCEDURE IF EXISTS orderDelivered;
+DROP PROCEDURE IF EXISTS palletIntoAnOrder;
+DROP PROCEDURE IF EXISTS palletOutOfAnOrder;
+DROP PROCEDURE IF EXISTS orderIntoALoad;
+
+-- Put ingredient amounts into ingredient stock
+DELIMITER //
+CREATE PROCEDURE delivery(
+	IN ing varchar(40), 
+	IN dt datetime,
+	IN am decimal(6,2)
+)
+BEGIN
+	insert into ingredientdelivery values(ing, dt, am);
+	update ingredients set amount = amount + am where ingredient = ing;
+END//
+DELIMITER ;
+
+-- Make a Pallet
+DELIMITER //
+CREATE PROCEDURE producePallet(
+	IN cName varchar(30), 
+	IN dt datetime
+)
+BEGIN
+	update Ingredients set amount = amount - (
+		select ingredientAmount 
+		from Recipes 
+		where Ingredients.ingredient = Recipes.ingredient AND cookieName = cName
+	)
+	where ingredient in (
+		select ingredient 
+		from Recipes 
+		where cookieName = cName
+	);
+	insert into pallets values(null, dt, cName, null, 0, 0);
+END//
+DELIMITER ;
+
+-- Make an Order
+DELIMITER //
+CREATE PROCEDURE placeOrder(
+	IN custName varchar(20), 
+	IN expDate date,
+	IN almondDelight int(11),
+	IN amneris int(11),
+	IN berliner int(11),
+	IN nutCookie int(11),
+	IN nutRing int(11),
+	IN tango int(11)
+)
+BEGIN
+	insert into orders values(null, expDate, null, custName);
+	set @ordNbr = (
+		select max(orderNbr) 
+		from orders
+	);
+	insert into nbrPallets values(@ordNbr, 'Almond delight', almondDelight);
+	insert into nbrPallets values(@ordNbr, 'Amneris', amneris);
+	insert into nbrPallets values(@ordNbr, 'Berliner', berliner);
+	insert into nbrPallets values(@ordNbr, 'Nut cookie', nutCookie);
+	insert into nbrPallets values(@ordNbr, 'Nut ring', nutRing);
+	insert into nbrPallets values(@ordNbr, 'Tango', tango);
+	update orders set nbrPalletsTotal = ( 
+		select sum(nbrPallets) 
+		from nbrPallets 
+		where orderNbr = @ordNbr 
+	) 
+	where orderNbr = @ordNbr; 
+END//
+DELIMITER ;
+
+-- Mark an Order as Delivered
+DELIMITER //
+CREATE PROCEDURE orderDelivered(
+	IN oNbr int,
+	IN dTimeStamp DateTime
+)
+BEGIN
+	insert into loadingBills (loadNbr, orderNbr, deliveryTimeStamp) select loadNbr, orderNbr, dTimeStamp from loadingOrders where orderNbr = oNbr;
+	delete from loadingOrders where orderNbr = oNbr;
+END//
+DELIMITER ;
+
+-- Assign a pallet to an Order
+DELIMITER //
+CREATE PROCEDURE palletIntoAnOrder(
+	IN pNbr int, 
+	IN oNbr int
+)
+BEGIN
+	update pallets set orderNbr = oNbr where palletNbr = pNbr;
+	-- update orders set nbrPalletsTotal = nbrPalletsTotal-1 where orderNbr = oNbr;
+END//
+DELIMITER ;
+
+-- Unassign a Pallet from an Order
+-- Bug: could screw up things if pallet unassigned
+DELIMITER //
+CREATE PROCEDURE palletOutOfAnOrder(
+	IN pNbr int
+)
+BEGIN
+	-- set @oNbr = (select orderNbr from pallets where palletNbr = pNbr);
+	update pallets set orderNbr = null where palletNbr = pNbr;
+	-- update orders set nbrPalletsTotal = nbrPalletsTotal+1 where orderNbr = @oNbr;
+END//
+DELIMITER ;
+
+-- Assign an Order into a Load
+DELIMITER //
+CREATE PROCEDURE orderIntoALoad(
+	IN lNbr int, 
+	IN oNbr int
+)
+BEGIN
+	insert into loadingorders values(lNbr , oNbr);
+	update pallets set loaded = 1 where orderNbr = oNbr;
+END//
+DELIMITER ;
 

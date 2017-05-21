@@ -8,11 +8,20 @@ public class Load {
 	private int spaceLeft;
 	private int loadNbr;
 	private List<Order> orders;
+	private String deliveryTimeStamp;
 	
 	public Load(int loadNbr){
 		this.loadNbr = loadNbr;
 		this.spaceLeft = 60;
 		this.orders = new ArrayList<Order>();
+		this.deliveryTimeStamp = null;
+	}
+	
+	public Load(int loadNbr, String deliveryTimeStamp){
+		this.loadNbr = loadNbr;
+		this.spaceLeft = 60;
+		this.orders = new ArrayList<Order>();
+		this.deliveryTimeStamp = deliveryTimeStamp;
 	}
 
 	public int getLoadNbr(){
@@ -47,7 +56,26 @@ public class Load {
 		
 	}
 	
+	public boolean isDelivered(){
+		return !(deliveryTimeStamp == null);
+	}
 	
+	public String getDeliveryTimeStamp(){
+		if(isDelivered()){
+			return deliveryTimeStamp.toString();
+		}else{
+			return null;
+		}
+	}
+	
+	public String getOrderTags(){
+		StringBuilder builder = new StringBuilder();
+		builder.append("|");
+		for(Order o : orders){
+			builder.append(o.getOrderNbr() + "|");
+		}
+		return builder.toString();
+	}
 	
 	
 

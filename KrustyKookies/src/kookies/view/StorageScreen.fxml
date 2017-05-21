@@ -34,15 +34,15 @@
               </items>
             </ChoiceBox>
             <ListView fx:id="palletInfoList" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="60.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="420.0" />
-            <Button fx:id="addPalletsButton" mnemonicParsing="false" prefHeight="30.0" text="Add To Order" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="545.0" />
-            <Button fx:id="blockPalletsButton" layoutX="139.0" layoutY="390.0" mnemonicParsing="false" text="Block Pallet" AnchorPane.leftAnchor="160.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="389.0" />
+            <Button fx:id="addPalletsButton" mnemonicParsing="false" onMouseClicked="#addPalletsButtonPressed" prefHeight="30.0" text="Add To Order" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="545.0" />
+            <Button fx:id="blockPalletsButton" layoutX="139.0" layoutY="390.0" mnemonicParsing="false" onMouseClicked="#blockPalletsButtonPressed" text="Block Pallet" AnchorPane.leftAnchor="160.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="389.0" />
             <Label layoutX="16.0" layoutY="366.0" text="Pallet info" AnchorPane.topAnchor="390.0">
               <font>
                 <Font name="System Bold" size="20.0" fx:id="x2" />
               </font>
             </Label>
             <TextField fx:id="palletNbrField" layoutY="198.0" prefHeight="30.0" prefWidth="120.0" promptText="PalletNbr" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="190.0" />
-            <Button fx:id="showPalletsButton" minHeight="30.0" mnemonicParsing="false" prefHeight="30.0" prefWidth="120.0" text="Show Pallets" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="190.0" />
+            <Button fx:id="showPalletsButton" minHeight="30.0" mnemonicParsing="false" onMouseClicked="#showPalletsButtonPressed" prefHeight="30.0" prefWidth="120.0" text="Show Pallets" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="190.0" />
                   <ListView fx:id="palletList" layoutX="42.0" layoutY="250.0" prefHeight="150.0" prefWidth="200.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="230.0" />
                   <TextField fx:id="palletLLField" layoutX="17.0" layoutY="34.0" prefWidth="100.0" promptText="yyyy-mm-dd" AnchorPane.topAnchor="34.0" />
                   <TextField fx:id="palletULField" layoutX="154.0" layoutY="34.0" prefWidth="100.0" promptText="yyyy-mm-dd" AnchorPane.topAnchor="34.0" />
@@ -51,7 +51,7 @@
                   <ChoiceBox fx:id="customerChoiceBox" layoutX="125.0" layoutY="155.0" prefWidth="150.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="155.0" />
                   <Label layoutX="32.0" layoutY="125.0" text="Cookie Type" />
                   <Label layoutX="42.0" layoutY="160.0" text="Customer" />
-                  <Button fx:id="removePalletsButton" layoutX="174.0" layoutY="545.0" mnemonicParsing="false" prefHeight="30.0" text="Remove From Order" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="545.0" />
+                  <Button fx:id="removePalletsButton" layoutX="174.0" layoutY="545.0" mnemonicParsing="false" onMouseClicked="#removePalletsButtonPressed" prefHeight="30.0" text="Remove From Order" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="545.0" />
                   <ChoiceBox fx:id="locationChoiceBox" layoutX="115.0" layoutY="83.0" prefWidth="150.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="85.0">
                      <items>
                         <FXCollections fx:factory="observableArrayList">
@@ -69,21 +69,21 @@
           <children>
             <Label font="$x1" text="Active Orders" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="88.0" AnchorPane.topAnchor="5.0" />
             <ListView fx:id="loadingOrdersList" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="60.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="350.0" />
-            <Button fx:id="sendOutOrdersButton" minHeight="30.0" mnemonicParsing="false" prefHeight="30.0" text="Send Out Order(s)" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="545.0" />
-            <Button fx:id="newLoadingOrderButton" mnemonicParsing="false" prefHeight="30.0" text="New Loading Order" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="545.0" />
+            <Button fx:id="sendOutOrdersButton" minHeight="30.0" mnemonicParsing="false" onMouseClicked="#sendOutOrdersButtonPressed" prefHeight="30.0" text="Send Out Order(s)" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="545.0" />
+            <Button fx:id="newLoadingOrderButton" mnemonicParsing="false" onMouseClicked="#newLoadingOrderButtonPressed" prefHeight="30.0" text="New Loading Order" AnchorPane.leftAnchor="10.0" AnchorPane.topAnchor="545.0" />
             <ListView fx:id="activeOrdersList" prefHeight="150.0" prefWidth="107.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="90.0" />
                   <TextField fx:id="orderLLField" layoutX="20.0" layoutY="35.0" prefWidth="100.0" promptText="yyyy-mm-dd" />
                   <TextField fx:id="orderULField" layoutX="183.0" layoutY="35.0" prefWidth="100.0" promptText="yyyy-mm-dd" />
                   <CheckBox fx:id="orderLLCheckBox" layoutX="11.0" layoutY="67.0" mnemonicParsing="false" text="Set Lower Limit" />
                   <CheckBox fx:id="orderULCheckBox" layoutX="173.0" layoutY="67.0" mnemonicParsing="false" text="Set Upper Limit" />
-                  <Button fx:id="showOrdersButton" layoutX="13.0" layoutY="249.0" mnemonicParsing="false" text="Show Orders" AnchorPane.leftAnchor="10.0" />
+                  <Button fx:id="showOrdersButton" layoutX="13.0" layoutY="249.0" mnemonicParsing="false" onMouseClicked="#showOrdersButtonPressed" text="Show Orders" AnchorPane.leftAnchor="10.0" />
                   <Label layoutX="12.0" layoutY="318.0" text="Plan Loading Orders">
                      <font>
                         <Font name="System Bold" size="24.0" fx:id="x11" />
                      </font>
                   </Label>
-                  <Button fx:id="addOrdersButton" layoutX="122.0" layoutY="249.0" mnemonicParsing="false" text="Add To Loading Order" AnchorPane.rightAnchor="10.0" />
-                  <Button fx:id="showPalletsFromOrderButton" layoutX="11.0" layoutY="283.0" mnemonicParsing="false" text="Show Pallets In Order" AnchorPane.leftAnchor="10.0" />
+                  <Button fx:id="addOrdersButton" layoutX="122.0" layoutY="249.0" mnemonicParsing="false" onMouseClicked="#addOrdersButtonPressed" text="Add To Loading Order" AnchorPane.rightAnchor="10.0" />
+                  <Button fx:id="showPalletsFromOrderButton" layoutX="11.0" layoutY="283.0" mnemonicParsing="false" onMouseClicked="#showPalletsFromOrderButtonPressed" text="Show Pallets In Order" AnchorPane.leftAnchor="10.0" />
                   <Label layoutX="146.0" layoutY="40.0" text="-" />
           </children>
         </AnchorPane>

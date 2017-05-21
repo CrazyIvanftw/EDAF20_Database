@@ -42,6 +42,7 @@ public class StorageController {
 	private String[] locations = {"All", "Storage", "Out For Delivery", "Delivered"};
 	private String currentCookieType;
 	private String currentCustomer;
+	private String currentLocation;
 	
 	private ObservableList<String> obLocationsBox = FXCollections.observableArrayList();
 	private ObservableList<String> obCookieTypeBox = FXCollections.observableArrayList();
@@ -57,6 +58,7 @@ public class StorageController {
 	private List<Load> dbLoadingOrderList;
 	private List<Cookie> dbCookieList;
 	private List<Customer> dbCustomerList;
+	private List<Load> dbLoadingBillList;
 	
 	@FXML
 	private Button showPalletsButton;
@@ -167,7 +169,9 @@ public class StorageController {
 		        	System.out.println("no selection");
 		        }else{
 		        	//TODO make sure string is only pallet nbr
-		        	setCurrentPallet(Integer.parseInt(newValue));
+		        	setCurrentPallet(Integer.parseInt(newValue.substring(0, newValue.indexOf(" "))));
+		        	updatePalletInfoList(currentPallet.getPalletInfo(findOrderByPallet(currentPallet),findLoadByPallet(currentPallet)));
+		        	printCurrents();
 		        }
 		    }
 		});
@@ -179,7 +183,8 @@ public class StorageController {
 		        	System.out.println("no selection");
 		        }else{
 		        	//TODO make sure string is only order nbr
-		        	setCurrentOrder(Integer.parseInt(newValue));
+		        	setCurrentOrder(Integer.parseInt(newValue.substring(0, newValue.indexOf(" "))));
+		        	printCurrents();
 		        }
 		    }
 		});
@@ -191,7 +196,8 @@ public class StorageController {
 		        	System.out.println("no selection");
 		        }else{
 		        	//TODO make sure string is only load nbr
-		        	setCurrentLoadingOrder(Integer.parseInt(newValue));
+		        	setCurrentLoadingOrder(Integer.parseInt(newValue.substring(0, newValue.indexOf(" "))));
+		        	printCurrents();
 		        }
 		    }
 		});
@@ -204,6 +210,7 @@ public class StorageController {
 		
 		// Cookie Choice Box
 		dbCookieList = db.getCookieList();
+		obCookieTypeBox.add("All");
 		for(Cookie c : dbCookieList){
 			obCookieTypeBox.add(c.getName());
 		}
@@ -211,36 +218,33 @@ public class StorageController {
 		
 		// Customer Choice Box
 		dbCustomerList = db.getCustomerList();
+		obCustomerBox.add("All");
 		for(Customer c : dbCustomerList){
 			obCustomerBox.add(c.getName());
 		}
 		customerChoiceBox.setItems(obCustomerBox);
 		
 		// Pallet List
-		dbPalletList = db.getPallets(); //TODO should make a method to specify what pallets;
-		for(Pallet p : dbPalletList){
-			observablePallets.add(String.valueOf(p.getPalletNbr()));
-		}
-		palletList.setItems(observablePallets);
+		dbPalletList = db.getPallets();
+		updatePalletList(dbPalletList);
 		
 		// Pallet Info List
 		palletInfoList.setItems(observablePalletsInfo);
+		//updatePalletInfoList(null);
 		
 		// Orders List
 		dbOrderList = db.getUndeliveredOrders();
-		for(Order o : dbOrderList){
-			observableOrders.add(String.valueOf(o.getOrderNbr()));
-		}
-		activeOrdersList.setItems(observableOrders);
+		updateOrderList(dbOrderList);
 		
 		// Loading Orders
 		dbLoadingOrderList = db.getLoadingOrders();
-		for(Load l : dbLoadingOrderList){
-			observableLoadingOrders.add(String.valueOf(l.getLoadNbr()));
-		}
-		loadingOrdersList.setItems(observableLoadingOrders);
+		updateLoadingOrderList(dbLoadingOrderList);
 
-		
+		// Delivered Loads
+		dbLoadingBillList = db.getLoadingBills();
+		for(Load l : dbLoadingBillList){
+			System.out.println("load# " + l.getLoadNbr() + " delivered at: " + l.getDeliveryTimeStamp());
+		}
 		
 	}
 	
@@ -250,6 +254,7 @@ public class StorageController {
 		
 	}
 	
+	// SET CURRENT ORDER
 	private void setCurrentPallet(int palletNbr){
 		for(Pallet p : dbPalletList){
 			if(p.getPalletNbr() == palletNbr){
@@ -259,6 +264,7 @@ public class StorageController {
 		}
 	}
 	
+	// SET CURRENT ORDER
 	private void setCurrentOrder(int orderNbr){
 		for(Order o : dbOrderList){
 			if(o.getOrderNbr() == orderNbr){
@@ -268,6 +274,7 @@ public class StorageController {
 		}
 	}
 
+	// SET CURRENT LOADING ORDER
 	private void setCurrentLoadingOrder(int loadNbr){
 		for(Load l : dbLoadingOrderList){
 			if(l.getLoadNbr() == loadNbr){
@@ -277,84 +284,176 @@ public class StorageController {
 		}
 	}
 	
-	private List<Pallet> filterPallets(){
-		ArrayList<Pallet> filtered = new ArrayList<Pallet>();
-		boolean blockedSetting = blockedCheckBox.isSelected();
-		String lowerLimit = null;
-		String upperLimit = null;
-		if(palletLLCheckBox.isSelected()){
-			lowerLimit = palletLLField.getText();
+	// UPDATE PALLET LIST
+	private void updatePalletList(List<Pallet> pallets){
+		observablePallets.clear();
+		for(Pallet p : pallets){
+			observablePallets.add(String.valueOf(p.getPalletNbr()) + " : " + p.getPalletType().getName());
 		}
-		if(palletULCheckBox.isSelected()){
-			upperLimit = palletULField.getText();
+		palletList.setItems(observablePallets);
+	}
+	
+	//UPDATE ORDER LIST
+	private void updateOrderList(List<Order> orders){
+		observableOrders.clear();
+		for(Order o : orders){
+			observableOrders.add(String.valueOf(o.getOrderNbr()) + " : " + o.getExpectedDeliveryDate() + " " + o.getCookiesTag());
 		}
-		for(Pallet p : dbPalletList){
-			for(Order o : dbOrderList){
-				
+		activeOrdersList.setItems(observableOrders);
+	}
+	
+	// UPDATE LOADING ORDER LIST
+	private void updateLoadingOrderList(List<Load> loadingOrders){
+		observableLoadingOrders.clear();
+		for(Load l : loadingOrders){
+			observableLoadingOrders.add(String.valueOf(l.getLoadNbr()) + " : " + l.getOrderTags());
+		}
+		loadingOrdersList.setItems(observableLoadingOrders);
+	}
+	
+	// UPDATE PALLET INFO
+	private void updatePalletInfoList(List<String> info){
+		observablePalletsInfo.clear();
+		for(String s : info){
+			observablePalletsInfo.add(s);
+		}
+		palletInfoList.setItems(observablePalletsInfo);
+	}
+	
+	private Order findOrderByPallet(Pallet pallet){
+		for(Order o : dbOrderList){
+			if(pallet.isInOrder(o)){
+				return o;
 			}
-			
 		}
-		return filtered;
+		return null;
+	}
+	
+	private Load findLoadByPallet(Pallet pallet){
+		for(Load l : dbLoadingOrderList){
+			System.out.println("pallet in load: " + pallet.isInLoad(l));
+			if(pallet.isInLoad(l)){
+				return l;
+			}
+		}
+		for(Load l : dbLoadingBillList){
+			System.out.println("pallet in load: " + pallet.isInLoad(l));
+			if(pallet.isInLoad(l)){
+				return l;
+			}
+		}
+		return null;
+	}
+	
+	private boolean checkPalletDelivered(){
+		for(Load l : dbLoadingBillList){
+			if(currentPallet.isInLoad(l)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean checkPalletLoaded(){
+		for(Load l : dbLoadingOrderList){
+			if(currentPallet.isInLoad(l)){
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@FXML
 	private void locationSelected(String location){
-		this.locationQuery = location;
+		System.out.println(location);
+		currentLocation = location;
 	}
 	
 	@FXML
 	private void cookieTypeSelected(String cookie){
-		this.currentCookieType = cookie;
+		System.out.println(cookie);
+		currentCookieType = cookie;
 	}
 	
 	@FXML
 	private void customerSelected(String customer){
-		this.currentCustomer = customer;
+		System.out.println(customer);
+		currentCustomer = customer;
+		if(currentCustomer.equals("All")){
+			updatePalletList(db.getPalletListFromQuery("select * from pallets"));
+		}else{
+			for(Order o : dbOrderList){
+				if(o.getCustomer().getName().equals(currentCustomer)){
+					updatePalletList(db.getPalletListFromQuery("select * from pallets where orderNbr =" + o.getOrderNbr()));
+				}
+			}
+		}
 	}
 	
 	@FXML
 	private void showPalletsButtonPressed(){
-
+		String field = palletNbrField.getText();
+		if(field.equals("")){
+			updatePalletList(db.getPalletListFromQuery("select * from pallets"));
+		}else{
+			updatePalletList(db.getPalletListFromQuery("select * from pallets where palletNbr =" + field));
+		}
 	}
 
 	@FXML
 	private void blockPalletsButtonPressed(){
-
+		
 	}
 
 	@FXML
 	private void addPalletsButtonPressed(){
-
+		db.palletIntoOrder(currentPallet, currentOrder);
+		dbPalletList = db.getPallets();
+		updatePalletList(dbPalletList);
 	}
 
 	@FXML
 	private void removePalletsButtonPressed(){
-
+		db.palletOutOfOrder(currentPallet);
+		dbPalletList = db.getPallets();
+		updatePalletList(dbPalletList);
 	}
 
 	@FXML
 	private void showOrdersButtonPressed(){
-
+		
 	}
 
 	@FXML
 	private void showPalletsFromOrderButtonPressed(){
-
+		System.out.println("Pallets from order");
+		updatePalletList(db.getPalletsByOrderNbr(currentOrder.getOrderNbr()));
 	}
 
 	@FXML
 	private void addOrdersButtonPressed(){
-
+		db.assignOrderToLoad(currentOrder,currentLoadingOrder);
+		dbLoadingOrderList = db.getLoadingOrders();
+		updateLoadingOrderList(dbLoadingOrderList);
 	}
 
 	@FXML
 	private void newLoadingOrderButtonPressed(){
-
+		db.assignOrderToLoad(currentOrder,null);
+		dbLoadingOrderList = db.getLoadingOrders();
+		updateLoadingOrderList(dbLoadingOrderList);
 	}
 
 	@FXML
 	private void sendOutOrdersButtonPressed(){
 
+	}
+	
+	public void printCurrents(){
+		if(currentPallet != null)
+		System.out.println("currentPallet: " + currentPallet.getPalletNbr());
+		if(currentOrder != null)
+		System.out.println("currentOrder: " + currentOrder.getOrderNbr());
 	}
 	
 	public void setMainApp(MainApp mainApp) {

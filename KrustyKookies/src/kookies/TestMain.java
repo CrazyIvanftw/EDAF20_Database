@@ -45,6 +45,13 @@ public class TestMain {
 				System.out.println(s);
 			}
 		}
+		
+		List<Pallet> pallets = db.getPallets();
+		for(Pallet p : pallets){
+			System.out.println(p.getProductionDate() + " compare to " + date);
+			System.out.println("return int: " + p.getProductionDate().compareTo(date));
+		}
+		
 
 		db.closeConnection();
 		

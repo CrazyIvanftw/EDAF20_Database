@@ -114,7 +114,19 @@ public class Order {
 				}
 			}
 		}
-		this.palletsNeeded = palletsNeeded();
+		//this.palletsNeeded = palletsNeeded();
+	}
+	
+	public String getCookiesTag(){
+		StringBuilder builder = new StringBuilder();
+		String[] cookies = {"Almond delight", "Amneris", "Berliner", "Nut cookie", "Nut ring", "Tango"};
+		int[] totals = getPalletTotals();
+		for(int i = 0 ; i < 6 ; i++){
+			if(totals[i] > 0){
+				builder.append("("+totals[i] + " " + cookies[i].substring(0, 4) +") ");
+			}
+		}
+		return builder.toString();
 	}
 	
 	public void removeBlockedPallets(){
