@@ -273,11 +273,7 @@ package kookies.model;
     				o.setOrderNbr(undeliveredRS.getInt(2));
     				o.setPalletTotals(getCookieList(), getNbrPallets(o.getOrderNbr()));
     				for(Pallet p : getPalletsByOrderNbr(o.getOrderNbr())){
-    					System.out.println("Pallet from db: " + p.getPalletNbr());
     					o.addPalletToOrder(p);
-    				}
-    				for(String s : o.palletsInOrder()){
-    					System.out.println("order from db: " + s);
     				}
     				undeliveredList.add(o);
     			}
@@ -341,7 +337,27 @@ package kookies.model;
 		
 		public List<Load> getLoadingOrders(){
 			ArrayList<Load> loadingOrders = new ArrayList<Load>();
-			//TODO
+			String loadingOrdersQuery = "select * from loadingorders";
+			try{
+	    		Statement statement = conn.createStatement();
+	    		ResultSet loadingOrdersRS = statement.executeQuery(loadingOrdersQuery);
+	    		int lastLoadNbr = 0;
+	    		while(loadingOrdersRS.next()){
+	    			int currentLoadNbr = loadingOrdersRS.getInt(1);
+	    			if(currentLoadNbr != lastLoadNbr){
+	    				Load loadingOrder = new Load(currentLoadNbr);
+	    				List<Order> orders = getOrdersByLoadingNbr(loadingOrder.getLoadNbr());
+	    				for(Order o : orders){
+	    					loadingOrder.addOrder(o);
+	    				}
+	    				loadingOrders.add(loadingOrder);
+	    			}
+	    			lastLoadNbr = currentLoadNbr;
+	    		}
+	    		statement.close();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
 			return loadingOrders;
 		}
 		
@@ -351,6 +367,32 @@ package kookies.model;
 			}else{
 				//TODO call orderIntoALoad(loadNbr,order.getOrderNbr());
 			}
+		}
+		
+		public List<Order> getOrdersByLoadingNbr(int loadingNbr){
+			ArrayList<Order> ordersList = new ArrayList<Order>();
+			String ordersQuery = "select * from orders natural join customers where orderNbr in (select orderNbr from loadingorders where loadNbr = "+loadingNbr +")";
+			try{
+	    		Statement statement = conn.createStatement();
+	    		ResultSet ordersRS = statement.executeQuery(ordersQuery);
+	    		while(ordersRS.next()){
+	    			Order o = new Order(
+	    					new Customer(ordersRS.getString(1),ordersRS.getString(5)),
+	    					ordersRS.getString(3)
+	    				);
+	    			o.setOrderNbr(ordersRS.getInt(2));
+	    			o.setPalletTotals(getCookieList(), getNbrPallets(o.getOrderNbr()));
+	    			for(Pallet p : getPalletsByOrderNbr(o.getOrderNbr())){
+	    				System.out.println("Pallet by load from db: " + p.getPalletNbr());
+	    				o.addPalletToOrder(p);
+	    			}
+	    			ordersList.add(o);
+	    		}
+	    		statement.close();
+	    	}catch(Exception e){
+	    		e.printStackTrace();
+	    	}
+			return ordersList;
 		}
 		
 		public void orderDelivered(Order order){

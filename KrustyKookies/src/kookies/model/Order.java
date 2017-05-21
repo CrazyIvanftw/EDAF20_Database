@@ -10,11 +10,17 @@ public class Order {
 	private int orderNbr;
 	private String expectedDeliveryDate;
 	private HashMap<Cookie,Pallet[]> pallets;
+	private List<String> palletsNeeded;
+	private int palletTotal;
 	
 	public Order(Customer customer, String expectedDeliveryDate){
 		this.customer = customer;
 		this.expectedDeliveryDate = expectedDeliveryDate;
 		pallets = new HashMap<Cookie,Pallet[]>();
+	}
+	
+	public int getPalletTotal(){
+		return palletTotal;
 	}
 	
 	public void setOrderNbr(int orderNbr){
@@ -58,10 +64,43 @@ public class Order {
 		return palletsInOrder;
 	}
 	
+	public List<String> getPalletsNeeded(){
+		return palletsNeeded;
+	}
+	
+	private List<String> palletsNeeded(){
+		ArrayList<String> palletsNeeded = new ArrayList<String>();
+		palletsNeeded.add("  Pallets Needed: ");
+		for(Cookie c : pallets.keySet()){
+			StringBuilder builder = new StringBuilder();
+			builder.append("    - " + c.getName() + " ");
+			Pallet[] palletArray = pallets.get(c);
+			int i = palletArray.length;
+			for(Pallet p : palletArray){
+				if(p != null){
+					i = i - 1;
+				}else{
+					break;
+				}
+			}
+			builder.append(i);
+			if(i > 0){
+				palletsNeeded.add(builder.toString());
+			}
+		}
+		if(palletsNeeded.size()==1){
+			palletsNeeded.set(0, "  Order Full.");
+		}
+		return palletsNeeded();
+	}
+	
 	public void setPalletTotals(List<Cookie> typeOfCookie, List<Integer> number){
+		int total = 0;
 		for(int i = 0 ; i < typeOfCookie.size() ; i++){
 			pallets.put(typeOfCookie.get(i), new Pallet[number.get(i)]);
+			total = total + number.get(i);
 		}
+		this.palletTotal = total;
 	}
 	
 	public void addPalletToOrder(Pallet pallet){
@@ -75,6 +114,7 @@ public class Order {
 				}
 			}
 		}
+		this.palletsNeeded = palletsNeeded();
 	}
 	
 	public void removeBlockedPallets(){
